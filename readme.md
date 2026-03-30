@@ -34,34 +34,23 @@ local Window = Rayfield:CreateWindow({
 
 local Tab = Window:CreateTab("Main", 4483362458)
 
--- ✅ FOV Slider
-Tab:CreateSlider({
-   Name = "Field of View",
-   Range = {70, 120},
-   Increment = 1,
-   Suffix = "°",
-   CurrentValue = workspace.CurrentCamera.FieldOfView,
-   Flag = "FOVSlider",
-   Callback = function(Value)
-      workspace.CurrentCamera.FieldOfView = Value
-   end,
-})
-
--- ✅ Variables
+-- Variables
 local flying = false
 local flyConnection
 local noclipping = false
 local noclipConnection
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
 local goUp = false
 local goDown = false
 
--- ✅ On-screen GUI buttons for mobile
+-- On-screen GUI buttons for mobile fly
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "FlyButtons"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = game.Players.LocalPlayer.PlayerGui
+screenGui.Parent = player.PlayerGui
 
 -- Up Button
 local upButton = Instance.new("TextButton")
@@ -97,15 +86,13 @@ downCorner.Parent = downButton
 
 screenGui.Enabled = false
 
--- Hold up/down
 upButton.MouseButton1Down:Connect(function() goUp = true; goDown = false end)
 upButton.MouseButton1Up:Connect(function() goUp = false end)
 downButton.MouseButton1Down:Connect(function() goDown = true; goUp = false end)
 downButton.MouseButton1Up:Connect(function() goDown = false end)
 
--- ✅ Fly Functions
+-- Fly Functions
 local function startFly()
-    local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:WaitForChild("Humanoid")
@@ -150,7 +137,6 @@ local function startFly()
 end
 
 local function stopFly()
-    local player = game.Players.LocalPlayer
     local character = player.Character
     if not character then return end
 
@@ -176,11 +162,9 @@ local function stopFly()
     goDown = false
 end
 
--- ✅ Noclip Functions
+-- Noclip Functions
 local function startNoclip()
-    local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
-
     noclipConnection = RunService.Stepped:Connect(function()
         for _, part in pairs(character:GetDescendants()) do
             if part:IsA("BasePart") and part.CanCollide then
@@ -195,11 +179,8 @@ local function stopNoclip()
         noclipConnection:Disconnect()
         noclipConnection = nil
     end
-
-    local player = game.Players.LocalPlayer
     local character = player.Character
     if not character then return end
-
     for _, part in pairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
             part.CanCollide = true
@@ -207,8 +188,8 @@ local function stopNoclip()
     end
 end
 
--- ✅ Fly Toggle Button
-local FlyButton = Tab:CreateButton({
+-- Fly Toggle Button
+Tab:CreateButton({
     Name = "Fly Toggle",
     Callback = function()
         flying = not flying
@@ -216,11 +197,46 @@ local FlyButton = Tab:CreateButton({
     end,
 })
 
--- ✅ Noclip Toggle Button
-local NoclipButton = Tab:CreateButton({
+-- Noclip Toggle Button
+Tab:CreateButton({
     Name = "Noclip Toggle",
     Callback = function()
         noclipping = not noclipping
         if noclipping then startNoclip() else stopNoclip() end
     end,
+})
+
+-- FOV Slider
+Tab:CreateSlider({
+   Name = "FOV",
+   Range = {70, 120},
+   Increment = 1,
+   Suffix = "FOV",
+   CurrentValue = 70,
+   Flag = "FOVSlider",
+   Callback = function(value)
+      workspace.CurrentCamera.FieldOfView = value
+   end,
+})
+
+-- Infinite Jump (works on mobile via JumpRequest + PC Space)
+local jumpEnabled = false
+
+UIS.JumpRequest:Connect(function()
+    if not jumpEnabled then return end
+    local character = player.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Dead then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- Infinite Jump Toggle Button
+Tab:CreateButton({
+   Name = "Infinite Jump",
+   Callback = function()
+      jumpEnabled = not jumpEnabled
+      print("Infinite Jump:", jumpEnabled and "ON" or "OFF")
+   end,
 })
