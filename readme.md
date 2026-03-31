@@ -28,7 +28,7 @@ local Window = Rayfield:CreateWindow({
       FileName = "Key",
       SaveKey = true,
       GrabKeyFromSite = false,
-      Key = {"neva"}
+      Key = {"kay"}
    }
 })
 
@@ -238,5 +238,88 @@ Tab:CreateButton({
    Callback = function()
       jumpEnabled = not jumpEnabled
       print("Infinite Jump:", jumpEnabled and "ON" or "OFF")
+   end,
+})
+
+local ToolsTab = Window:CreateTab("Tools", 4483362458)
+
+ToolsTab:CreateButton({
+    Name = "Give Teleport Tool",
+    Callback = function()
+
+        local Players = game:GetService("Players")
+        local UserInputService = game:GetService("UserInputService")
+        local LocalPlayer = Players.LocalPlayer
+
+        -- prevent duplicates
+        if LocalPlayer.Backpack:FindFirstChild("Teleport") then return end
+
+        local tool = Instance.new("Tool")
+        tool.Name = "Teleport"
+        tool.RequiresHandle = true
+        tool.Parent = LocalPlayer.Backpack
+
+        local handle = Instance.new("Part")
+        handle.Name = "Handle"
+        handle.Size = Vector3.new(1,1,1)
+        handle.Transparency = 1
+        handle.CanCollide = false
+        handle.Parent = tool
+
+        local equipped = false
+        local connection
+
+        tool.Equipped:Connect(function()
+            equipped = true
+        end)
+
+        tool.Unequipped:Connect(function()
+            equipped = false
+        end)
+
+        -- disconnect old connection if button pressed again
+        if _G.TeleportConnection then
+            _G.TeleportConnection:Disconnect()
+        end
+
+        _G.TeleportConnection = UserInputService.InputBegan:Connect(function(input, processed)
+            if processed or not equipped then return end
+
+            if input.UserInputType == Enum.UserInputType.Touch then
+                local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local hrp = character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+
+                local camera = workspace.CurrentCamera
+                local pos = input.Position
+
+                local ray = camera:ViewportPointToRay(pos.X, pos.Y)
+                local result = workspace:Raycast(ray.Origin, ray.Direction * 1000)
+
+                if result then
+                    hrp.CFrame = CFrame.new(result.Position + Vector3.new(0, 3, 0))
+                end
+            end
+        end)
+
+    end,
+})
+
+ToolsTab:CreateButton({
+    Name = "Load Avatar ID Script",
+    Callback = function()
+        pcall(function()
+            loadstring(game:HttpGet("https://pastebin.com/raw/6krjFp9u"))()
+            notify("Avatar ID Script", "Script loaded successfully!")
+        end)
+    end
+})
+
+local ExtrasTab = Window:CreateTab("Extras", 4483362458) -- Title, Image
+
+local Button = ExtrasTab:CreateButton({
+   Name = "Spin Bot",
+   Callback = function()
+  loadstring(game:HttpGet("https://pastebin.com/raw/BevxRPmu"))() 
    end,
 })
